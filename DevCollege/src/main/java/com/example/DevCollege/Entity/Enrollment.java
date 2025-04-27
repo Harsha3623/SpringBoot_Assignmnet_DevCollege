@@ -7,6 +7,7 @@ import jakarta.persistence.ManyToOne;
 
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity
 
@@ -25,11 +26,13 @@ public class Enrollment {
     private Course course;
     //private String courseId;
 
-    private LocalDate start;
+    private LocalDateTime courseStartDatetime;
 
-    private LocalDate end;
+    private LocalDateTime courseEndDatetime;
+
 
     private String status;
+
 
     public String getEnrollId() {
         return enrollId;
@@ -55,20 +58,20 @@ public class Enrollment {
         this.course = course;
     }
 
-    public LocalDate getStart() {
-        return start;
+    public LocalDateTime getCourseStartDatetime() {
+        return courseStartDatetime;
     }
 
-    public void setStart(LocalDate start) {
-        this.start = start;
+    public void setCourseStartDatetime(LocalDateTime courseStartDatetime) {
+        this.courseStartDatetime = courseStartDatetime;
     }
 
-    public LocalDate getEnd() {
-        return end;
+    public LocalDateTime getCourseEndDatetime() {
+        return courseEndDatetime;
     }
 
-    public void setEnd(LocalDate end) {
-        this.end = end;
+    public void setCourseEndDatetime(LocalDateTime courseEndDatetime) {
+        this.courseEndDatetime = courseEndDatetime;
     }
 
     public String getStatus() {
@@ -79,12 +82,12 @@ public class Enrollment {
         this.status = status;
     }
 
-    public Enrollment(String enrollId, Student student, Course course, LocalDate start, LocalDate end, String status) {
+    public Enrollment(String enrollId, Student student, Course course, LocalDateTime courseStartDatetime, LocalDateTime courseEndDatetime, String status) {
         this.enrollId = enrollId;
         this.student = student;
         this.course = course;
-        this.start = start;
-        this.end = end;
+        this.courseStartDatetime = courseStartDatetime;
+        this.courseEndDatetime = courseEndDatetime;
         this.status = status;
     }
 

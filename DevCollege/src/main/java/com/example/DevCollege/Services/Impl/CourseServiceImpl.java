@@ -3,7 +3,6 @@ package com.example.DevCollege.Services.Impl;
 import com.example.DevCollege.DTO.CourseDto;
 import com.example.DevCollege.Entity.Course;
 import com.example.DevCollege.Entity.Enrollment;
-import com.example.DevCollege.Entity.Student;
 import com.example.DevCollege.Mapper.CourseMapper;
 import com.example.DevCollege.Repository.CourseRepository;
 import com.example.DevCollege.Repository.EnrollmentRepository;
@@ -55,6 +54,8 @@ public class CourseServiceImpl implements CourseService {
         int numericId = Integer.parseInt(lastId.substring(3));
         return String.format("CRS%04d",numericId+1);
     }
+
+
 
     @Override
     @Transactional
@@ -126,6 +127,8 @@ public class CourseServiceImpl implements CourseService {
 
     }
 
+
+
     @Override
     public ResponseEntity<?> deleteCourseDetails(String id) {
         Course course = repository.findById(id).orElse(null);
@@ -163,6 +166,8 @@ public class CourseServiceImpl implements CourseService {
         return ResponseEntity.ok("Successfully Deleted Course details for course id: "+id);
     }
 
+
+
     @Override
     public ResponseEntity<?> getCourseDetail(String id) {
 
@@ -175,6 +180,8 @@ public class CourseServiceImpl implements CourseService {
         return ResponseEntity.status(HttpStatus.ACCEPTED)
                 .body(courseMapper.courseToCourseDto(course));
     }
+
+
 
     @Override
     public ResponseEntity<?> getAllCourseDetail() {

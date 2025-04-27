@@ -1,15 +1,19 @@
 package com.example.DevCollege.Exception;
 
+
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
+import java.sql.SQLIntegrityConstraintViolationException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -51,4 +55,43 @@ public class GlobalExceptionHandler {
 
         return new ResponseEntity<>(error,HttpStatus.BAD_REQUEST);
     }
+
+    //if u place get method instead of post method it will handle that
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<?> handleMethodNotAllowedException(HttpRequestMethodNotSupportedException ex){
+        Map<String,String> error = new HashMap<>();
+
+        error.put("Error","Http method not allowed.");
+        error.put("Details:",ex.getMessage());
+
+        return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED)
+                .body(error);
+    }
+
+    //handle exception raised when there is no resource found on particular url
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<?> handleNoResourceFoundException(NoResourceFoundException ex){
+
+        Map<String,String> error = new HashMap<>();
+
+        error.put("Error:","NO Method found");
+        //error.put("Detail:",ex.getResourcePath());
+        error.put("Detail:",ex.getLocalizedMessage());
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(error);
+    }
+
+    //sql internal server error handler
+    @ExceptionHandler(SQLIntegrityConstraintViolationException.class)
+    public ResponseEntity<?> handleSqlIntegrityContraintViolationException(SQLIntegrityConstraintViolationException exception){
+        Map<String,String > error  = new HashMap<>();
+
+        error.put("Error:","Sql Integrity Constraint violation");
+        error.put("Detail:",exception.getMessage());
+
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(error);
+    }
+
 }

@@ -5,20 +5,32 @@ import jakarta.validation.constraints.*;
 
 public class StudentDto {
 
+
+
     private String studentId;
+
+
 
     @NotBlank(message = "Student name is required")
     private String name;
 
+
+
     @NotBlank(message = "Student Qualification is required")
     private String highestQualification;
+
+
 
     @Pattern(regexp = "^[0-9]{10}$",message = "Contact number must be a 10-digit number string")
     private String contactNo;
 
+
+
     @NotNull(message = "Student wallet amount is required")
-    @Min(value = 1,message = "wallet amount should not be less than 1")
+    @Min(value = 1,message = "wallet amount should not be negative.")
     private Float walletAmount;
+
+
 
     public String getStudentId() {
         return studentId;
