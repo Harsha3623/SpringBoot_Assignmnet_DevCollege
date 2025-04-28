@@ -184,7 +184,7 @@ public class StudentServiceImpl implements StudentService {
         List<Student> students = studentRepository.findAll();
 
         if(students.isEmpty()){
-            return ResponseEntity.status(HttpStatus.NO_CONTENT)
+            return ResponseEntity.status(HttpStatus.OK)
                     .body("No data found.");
         }
 

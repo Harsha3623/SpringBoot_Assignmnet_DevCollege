@@ -7,4 +7,12 @@ public interface EnrollmentService {
 
 
     ResponseEntity<?> addEnrollmentForCourse(EnrollmentAddDto enrollmentAddDto);
+
+    ResponseEntity<?> getEnrollmentDetailsUsingID(String id);
+
+    ResponseEntity<?> getAllEnrollmentDetails();
+
+    ResponseEntity<?> getEnrollmentDetailsForStudent(String stdId);
+
+    ResponseEntity<?> changeStatus(String enrollId);
 }

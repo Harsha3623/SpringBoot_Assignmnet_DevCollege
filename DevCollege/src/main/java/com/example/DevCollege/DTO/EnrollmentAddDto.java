@@ -1,5 +1,6 @@
 package com.example.DevCollege.DTO;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
@@ -17,7 +18,9 @@ public class EnrollmentAddDto {
 
     //not null for both integer and datetime
     @NotNull(message = "Course start date time is required.")
-    private LocalDateTime courseStartDateTime;
+    //format the user input to this format
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private LocalDateTime courseStartDatetime;
 
 
     public String getStudentId() {
@@ -36,11 +39,11 @@ public class EnrollmentAddDto {
         this.courseId = courseId;
     }
 
-    public LocalDateTime getCourseStartDateTime() {
-        return courseStartDateTime;
+    public LocalDateTime getCourseStartDatetime() {
+        return courseStartDatetime;
     }
 
-    public void setCourseStartDateTime(LocalDateTime courseStartDateTime) {
-        this.courseStartDateTime = courseStartDateTime;
+    public void setCourseStartDatetime(LocalDateTime courseStartDatetime) {
+        this.courseStartDatetime = courseStartDatetime;
     }
 }

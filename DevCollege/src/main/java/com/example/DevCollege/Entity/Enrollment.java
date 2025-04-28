@@ -17,7 +17,7 @@ public class Enrollment {
     private String enrollId;
 
     @ManyToOne
-    @JoinColumn(name = "student_id", referencedColumnName = "studentId", nullable = false)
+    @JoinColumn(name = "student_id", referencedColumnName = "studentId")
     private Student student;
     //private String studentId;
 
