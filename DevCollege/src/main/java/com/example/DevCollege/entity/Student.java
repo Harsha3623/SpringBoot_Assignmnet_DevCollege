@@ -9,13 +9,19 @@ public class Student {
     @Id
     private String studentId;
 
+
     private String name;
+
 
     private String highestQualification;
 
+
     private String contactNo;
 
+
     private Float walletAmount;
+
+
 
     public String getStudentId() {
         return studentId;

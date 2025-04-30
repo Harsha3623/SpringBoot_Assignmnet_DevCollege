@@ -9,19 +9,25 @@ public class EnrollmentDetailsDto {
 
     private String enrollId;
 
+
     private String studentId;
+
 
     private String studentName;
 
+
+
     private String courseId;
+
+
 
     private String courseName;
 
 
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(pattern = "yyyy/MM/dd HH:mm:ss")
     private LocalDateTime courseStartDatetime;
 
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(pattern = "yyyy/MM/dd HH:mm:ss")
     private LocalDateTime courseEndDatetime;
 
 

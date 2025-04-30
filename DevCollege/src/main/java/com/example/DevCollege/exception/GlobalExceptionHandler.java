@@ -20,6 +20,7 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+
     // Handle validation exceptions (e.g., @Valid annotations)
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, String>> handleValidationExceptions(MethodArgumentNotValidException ex) {
@@ -35,6 +36,7 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
     }
 
+
     // Handle general validation errors (e.g., invalid enum values, etc.)
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<Map<String, String>> handleConstraintViolationExceptions(ConstraintViolationException ex) {
@@ -44,6 +46,7 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
     }
 
+
     // Handle JSON parse errors (e.g., invalid data types, malformed JSON)
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<Map<String, String>> handleMessageNotReadableException(HttpMessageNotReadableException ex) {
@@ -52,6 +55,7 @@ public class GlobalExceptionHandler {
         error.put("details: ", ex.getMessage());
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
+
 
     // Handle InvalidFormatException (used when Jackson can't convert a string to a number)
     @ExceptionHandler(InvalidFormatException.class)
@@ -66,6 +70,7 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
 
+
     // Handle HttpMethodNotSupportedException (e.g., using GET instead of POST)
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
     public ResponseEntity<Map<String, String>> handleMethodNotAllowedException(HttpRequestMethodNotSupportedException ex) {
@@ -76,6 +81,7 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).body(error);
     }
 
+
     // Handle resource not found (e.g., no matching URL for the request)
     @ExceptionHandler(NoResourceFoundException.class)
     public ResponseEntity<Map<String, String>> handleNoResourceFoundException(NoResourceFoundException ex) {
@@ -85,6 +91,7 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
     }
+
 
     // Handle SQL integrity constraint violations (e.g., foreign key violations)
     @ExceptionHandler(SQLIntegrityConstraintViolationException.class)

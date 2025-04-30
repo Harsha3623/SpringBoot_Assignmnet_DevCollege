@@ -22,7 +22,6 @@ import java.util.stream.Collectors;
 public class StudentServiceImpl implements StudentService {
 
 
-
     //qualifications
     private List<String> allowedQualification = List.of(
             "B.E", "B.TECH", "DIPLOMA", "M.E", "M.TECH", "M.PHIL", "MS",
@@ -33,10 +32,8 @@ public class StudentServiceImpl implements StudentService {
     StudentRepository studentRepository;
 
 
-
     @Autowired
     StudentMapper studentMapper;
-
 
 
     @Autowired
@@ -48,19 +45,21 @@ public class StudentServiceImpl implements StudentService {
     StudentWalletAmountMapper studentWalletAmountMapper;
 
 
-
-    private String generateStudentId(){
+    private String generateStudentId() {
         Student student = studentRepository.findTopByOrderByStudentIdDesc();
 
-        if(student==null){
+        if (student == null) {
+
             return "STD0001";
         }
-        String studentId= student.getStudentId();
+
+        String studentId = student.getStudentId();
+
         int numericId = Integer.parseInt(studentId.substring(3));
-        return String.format("STD%04d",numericId+1);
+
+        return String.format("STD%04d", numericId + 1);
 
     }
-
 
 
     @Override
@@ -71,12 +70,14 @@ public class StudentServiceImpl implements StudentService {
 
         String studentID = generateStudentId();
 
-        String[] qualifications  = studentDto.getHighestQualification().split(",");
+        String[] qualifications = studentDto.getHighestQualification().split(",");
 
-        for(String s: qualifications){
-            if(!allowedQualification.contains(s.toUpperCase())){
+        for (String s : qualifications) {
+            if (!allowedQualification.contains(s.toUpperCase())) {
                 return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE)
-                        .body("Student Qualification is incorrect.");
+                        .body("Student Qualification is incorrect." +
+                                "\n" +
+                                "Allowed Qualifications:" + allowedQualification);
             }
         }
 
@@ -85,7 +86,7 @@ public class StudentServiceImpl implements StudentService {
         studentRepository.save(student);
 
         return ResponseEntity.status(HttpStatus.OK)
-                .body("Successfully Added Student details for "+studentID);
+                .body("Successfully Added Student details for " + studentID);
 
 
     }
@@ -97,26 +98,21 @@ public class StudentServiceImpl implements StudentService {
         //find student by id
         Student student = studentRepository.findById(stdId).orElse(null);
 
-        if(student==null){
+        if (student == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body("Student id: "+stdId+" is not present.");
+                    .body("Student id: " + stdId + " is not present.");
         }
 
         //updating the student details
         student.setName(studentDto.getName());
         student.setHighestQualification(studentDto.getHighestQualification());
         student.setContactNo(studentDto.getContactNo());
-        /*
 
-        for updating the name qualification and contact number
-        //wallet amount should be added
-        student.setWalletAmount(studentDto.getWalletAmount());
-
-         */
         //save the updated student detail back to db
         studentRepository.save(student);
-        return ResponseEntity.status(HttpStatus.ACCEPTED)
-                .body("Successfully updated student details for id: "+stdId);
+
+        return ResponseEntity.status(HttpStatus.OK)
+                .body("Successfully updated student details for id: " + stdId);
 
     }
 
@@ -127,28 +123,39 @@ public class StudentServiceImpl implements StudentService {
         Student student = studentRepository.findById(stdId).orElse(null);
 
         //if it is not present
-        if(student==null){
+        if (student == null) {
+
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body("Student id: "+stdId+" doesn't exist.");
+                    .body("Student id: " + stdId + " doesn't exist.");
+
         }
 
         //get all the student enrollment details
         List<Enrollment> studentEnrollment = enrollmentRepository.findByStudent_StudentId(stdId);
 
         //if it is empty then student is not assigned to any course
-        if(studentEnrollment.isEmpty()){
+        if (studentEnrollment.isEmpty()) {
+
             studentRepository.deleteById(stdId);
-            return ResponseEntity.status((HttpStatus.ACCEPTED))
-                    .body("Successfully deleted Student details for id:"+stdId);
+
+            return ResponseEntity.status((HttpStatus.OK))
+                    .body("Successfully deleted Student details for id:" + stdId);
         }
 
-        float refundAmount=0;
+        float refundAmount = 0;
+
         //calculate the refund amount
-        for(Enrollment e: studentEnrollment){
-            refundAmount+= e.getCourse().getFee()*((float) 50/100);
+        for (Enrollment e : studentEnrollment) {
+
+            //calculate refund only if it is allocated
+            if ("Allocated".equalsIgnoreCase(e.getStatus())) {
+
+                refundAmount += e.getCourse().getFee() * ((float) 50 / 100);
+            }
         }
+
         studentEnrollment.stream()
-                .map(e->{
+                .map(e -> {
                     e.setStudent(null);
                     e.setStatus("Cancelled");
                     return e;
@@ -160,9 +167,9 @@ public class StudentServiceImpl implements StudentService {
 
         studentRepository.deleteById(stdId);
 
-        return ResponseEntity.status(HttpStatus.ACCEPTED)
-                .body("Successfully deleted Student details with "+stdId+
-                        " And amount " +refundAmount+
+        return ResponseEntity.status(HttpStatus.OK)
+                .body("Successfully deleted Student details with " + stdId +
+                        " And amount " + refundAmount +
                         " will be refunded in original payment method within 24 hours.");
 
 
@@ -174,11 +181,14 @@ public class StudentServiceImpl implements StudentService {
 
 
         Student student = studentRepository.findById(stdId).orElse(null);
-        if(student==null){
+
+        if (student == null) {
+
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body("Student id: "+stdId+" is not present");
+                    .body("Student id: " + stdId + " is not present");
         }
-        return ResponseEntity.status(HttpStatus.FOUND)
+
+        return ResponseEntity.status(HttpStatus.OK)
                 .body(studentMapper.studentToStudentDto(student));
 
     }
@@ -188,14 +198,15 @@ public class StudentServiceImpl implements StudentService {
 
         List<Student> students = studentRepository.findAll();
 
-        if(students.isEmpty()){
+        if (students.isEmpty()) {
+
             return ResponseEntity.status(HttpStatus.OK)
                     .body("No data found.");
         }
 
-        return ResponseEntity.status(HttpStatus.FOUND)
+        return ResponseEntity.status(HttpStatus.OK)
                 .body(students.stream()
-                        .map(s->studentMapper.studentToStudentDto(s))
+                        .map(s -> studentMapper.studentToStudentDto(s))
                         .collect(Collectors.toList()));
     }
 
@@ -204,20 +215,22 @@ public class StudentServiceImpl implements StudentService {
 
         Student student = studentRepository.findById(stdId).orElse(null);
 
-        if(student==null){
+        if (student == null) {
+
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body("Student id: "+stdId+" doesn't found");
+                    .body("Student id: " + stdId + " doesn't found");
+
         }
 
         //saving the wallet amount and by adding the wallet amount
-        student.setWalletAmount(student.getWalletAmount()+studentWalletAmountDto.getWalletAmount());
+        student.setWalletAmount(student.getWalletAmount() + studentWalletAmountDto.getWalletAmount());
 
         studentRepository.save(student);
 
 
-        return ResponseEntity.status(HttpStatus.ACCEPTED)
-                .body("Successfully added Amount for student id: "+stdId+
-                        " and available balance is "+student.getWalletAmount());
+        return ResponseEntity.status(HttpStatus.OK)
+                .body("Successfully added Amount for student id: " + stdId +
+                        " and available balance is " + student.getWalletAmount());
 
     }
 
@@ -226,12 +239,14 @@ public class StudentServiceImpl implements StudentService {
 
         Student student = studentRepository.findById(stdId).orElse(null);
 
-        if(student==null){
+        if (student == null) {
+
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body("Student id: "+stdId+" is not found.");
+                    .body("Student id: " + stdId + " is not found.");
+
         }
 
-        return ResponseEntity.status(HttpStatus.FOUND)
+        return ResponseEntity.status(HttpStatus.OK)
                 .body(studentWalletAmountMapper.studentToStudentWalletAmountDto(student));
 
     }

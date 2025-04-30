@@ -9,16 +9,21 @@ import java.time.LocalDateTime;
 
 public class EnrollmentAddDto {
 
+
     @NotBlank(message = "Student is is required.")
     private String studentId;
+
 
     @NotBlank(message = "CourseId is required.")
     private String courseId;
 
+
     //not null for both integer and datetime
     @NotNull(message = "Course start date time is required.")
     //format the user input to this format
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+
+
+    @JsonFormat(pattern = "yyyy/MM/dd HH:mm:ss")
     private LocalDateTime courseStartDatetime;
 
 
@@ -45,4 +50,5 @@ public class EnrollmentAddDto {
     public void setCourseStartDatetime(LocalDateTime courseStartDatetime) {
         this.courseStartDatetime = courseStartDatetime;
     }
+
 }

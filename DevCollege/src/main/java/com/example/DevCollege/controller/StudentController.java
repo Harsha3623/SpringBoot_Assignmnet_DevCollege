@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 public class StudentController {
 
 
+
     @Autowired
     StudentService service;
 
@@ -24,11 +25,15 @@ public class StudentController {
     }
 
 
+
+
     //update Student
     @PutMapping("/updatestudent/{stdId}")
     public ResponseEntity<?> updateStudentDetail(@PathVariable String stdId, @Valid @RequestBody StudentDto studentDto){
         return service.updateStudentDetail(stdId,studentDto);
     }
+
+
 
     //deleting the student details
     @DeleteMapping("/deletestudent/{stdId}")
@@ -43,11 +48,15 @@ public class StudentController {
     }
 
 
+
+
     //getting all student details
     @GetMapping("/getAll")
     public ResponseEntity<?> getAllStudentDetail(){
         return service.getAllStudentDetail();
     }
+
+
 
     //Add Wallet amount
     @PostMapping("/studentwallet/{stdId}")
@@ -55,9 +64,12 @@ public class StudentController {
         return service.addWalletAmount(stdId,studentWalletAmountDto);
     }
 
+
+
     //get wallet details
     @GetMapping("/studentwallet/{stdId}")
     public ResponseEntity<?> getWalletDetail(@PathVariable String stdId){
         return service.getWalletDetail(stdId);
     }
+
 }

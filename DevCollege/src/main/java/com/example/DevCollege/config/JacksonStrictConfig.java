@@ -23,6 +23,7 @@ public class JacksonStrictConfig {
         mapper.coercionConfigFor(Float.class)
                 .setCoercion(CoercionInputShape.String, CoercionAction.Fail);
 
+        //time module coercion
         mapper.registerModule(new JavaTimeModule());
         mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 

@@ -8,5 +8,6 @@ import org.mapstruct.Mapper;
 public interface CourseMapper {
 
     CourseDto courseToCourseDto(Course course);
+
     Course courseDtoToCourse(CourseDto courseDto);
 }

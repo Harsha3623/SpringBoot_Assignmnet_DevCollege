@@ -15,17 +15,20 @@ public class Enrollment {
     @Id
     private String enrollId;
 
+    //private String studentId; and student can be nullable
     @ManyToOne
     @JoinColumn(name = "student_id", referencedColumnName = "studentId")
     private Student student;
-    //private String studentId;
 
+
+    //private String courseId;
     @ManyToOne
     @JoinColumn(name = "course_id", referencedColumnName = "courseId", nullable = false)
     private Course course;
-    //private String courseId;
+
 
     private LocalDateTime courseStartDatetime;
+
 
     private LocalDateTime courseEndDatetime;
 

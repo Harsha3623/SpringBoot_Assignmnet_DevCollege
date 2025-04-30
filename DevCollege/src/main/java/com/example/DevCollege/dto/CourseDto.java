@@ -1,33 +1,39 @@
 package com.example.DevCollege.dto;
 
 
-import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import jakarta.validation.constraints.*;
+
 
 public class CourseDto {
 
+
     String courseId;
+
 
     @NotBlank(message = "Course Name is mandatory")
     @Size(min = 3,max = 50,message = "Course Name must be between 3 and 50 character")
     private String name;
 
+
     @NotBlank(message = "Course description is required")
     private String description;
+
 
     @NotNull(message = "Number of slots is required")
     @Min(value = 1, message = "At least one slots should be there")
     private Integer noOfSlot;
 
 
+
     @NotNull(message = "Course fee is required")
     @Min(value = 1000,message = "Course fee should not less than 1000")
     private Float fee;
 
+
     @NotNull(message = "Course duration is required")
     @Min(value = 60, message = "Course duration should not be less than 60 minutes")
     private Integer duration;
+
 
     @NotBlank(message = "Course tag is required")
     private String tag;

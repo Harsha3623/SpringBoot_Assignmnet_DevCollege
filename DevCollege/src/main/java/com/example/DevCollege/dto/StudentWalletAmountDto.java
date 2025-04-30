@@ -10,9 +10,11 @@ public class StudentWalletAmountDto {
     private String studentId;
 
 
+
     @NotNull(message = "Student Wallet amount is required.")
     @Min(value = 1,message = "Wallet amount should not be negative")
     private Float walletAmount;
+
 
 
     public String getStudentId() {
