@@ -1,5 +1,6 @@
 package com.example.DevCollege.controller;
 
+import com.example.DevCollege.dto.StudentAddUpdateDTO;
 import com.example.DevCollege.dto.StudentDto;
 import com.example.DevCollege.dto.StudentWalletAmountDto;
 import com.example.DevCollege.services.StudentService;
@@ -20,8 +21,8 @@ public class StudentController {
 
 
     @PostMapping("/addstudent")
-    public ResponseEntity<?> addStudentDetail(@Valid @RequestBody StudentDto studentDto){
-        return service.addStudentDetail(studentDto);
+    public ResponseEntity<?> addStudentDetail(@Valid @RequestBody StudentAddUpdateDTO studentAddUpdateDTO){
+        return service.addStudentDetail(studentAddUpdateDTO);
     }
 
 
@@ -29,8 +30,8 @@ public class StudentController {
 
     //update Student
     @PutMapping("/updatestudent/{stdId}")
-    public ResponseEntity<?> updateStudentDetail(@PathVariable String stdId, @Valid @RequestBody StudentDto studentDto){
-        return service.updateStudentDetail(stdId,studentDto);
+    public ResponseEntity<?> updateStudentDetail(@PathVariable String stdId, @Valid @RequestBody StudentAddUpdateDTO studentAddUpdateDTO){
+        return service.updateStudentDetail(stdId,studentAddUpdateDTO);
     }
 
 

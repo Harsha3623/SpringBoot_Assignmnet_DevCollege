@@ -1,11 +1,14 @@
 package com.example.DevCollege.services.impl;
 
+import com.example.DevCollege.dto.CourseAddUpdateDTO;
 import com.example.DevCollege.dto.CourseDto;
 import com.example.DevCollege.entity.Course;
 import com.example.DevCollege.entity.Enrollment;
+import com.example.DevCollege.mapper.CourseAddUpdateMapper;
 import com.example.DevCollege.mapper.CourseMapper;
 import com.example.DevCollege.repository.CourseRepository;
 import com.example.DevCollege.repository.EnrollmentRepository;
+import com.example.DevCollege.response.ApiResponse;
 import com.example.DevCollege.services.CourseService;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +32,9 @@ public class CourseServiceImpl implements CourseService {
     @Autowired
     private CourseRepository repository;
 
+
+    @Autowired
+    CourseAddUpdateMapper courseAddUpdateMapper;
 
     @Autowired
     CourseMapper courseMapper;
@@ -55,9 +61,9 @@ public class CourseServiceImpl implements CourseService {
     //add course
     @Override
     @Transactional
-    public ResponseEntity<?> addCourseDetails(CourseDto courseDto) {
+    public ResponseEntity<?> addCourseDetails(CourseAddUpdateDTO courseAddUpdateDTO) {
 
-        Course course = courseMapper.courseDtoToCourse(courseDto);
+        Course course = courseAddUpdateMapper.courseAddUpdateDtoToCourse(courseAddUpdateDTO);
 
         //validating the tags for multiple inputs
         String[] qualification = (course.getTag()).split(",");
@@ -78,24 +84,28 @@ public class CourseServiceImpl implements CourseService {
         Course saved = repository.save(course);
         if (saved == null) {
 
-            return ResponseEntity.ok("Failed to add course details.");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.failure("Unable to save",
+                    "Failed to add course details."));
 
         } else {
 
-            return ResponseEntity.ok("Successfully added course details for " + courseId);
+            return ResponseEntity.status(HttpStatus.OK)
+                    .body(ApiResponse.success("Successfully added course details for " + courseId));
         }
     }
 
 
     //update course details
     @Override
-    public ResponseEntity<?> updateCourseDetails(String id, CourseDto courseDto) {
+    public ResponseEntity<?> updateCourseDetails(String id, CourseAddUpdateDTO courseAddUpdateDTO) {
 
         Course existing = repository.findById(id).orElse(null);
 
         if (existing == null) {
 
-            return ResponseEntity.ok("Courseid: " + id + " doesn't exist");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.failure("Course detail","Courseid: " + id + " doesn't exist"));
         }
 
         List<Enrollment> enrollment = enrollmentRepository.findByCourse_CourseId(id);
@@ -103,33 +113,36 @@ public class CourseServiceImpl implements CourseService {
         //if course is linked with student
         if (!enrollment.isEmpty()) {
 
-            if (existing.getNoOfSlot() <= courseDto.getNoOfSlot()) {
+            if (existing.getNoOfSlot() <= courseAddUpdateDTO.getNoOfSlot()) {
 
-                existing.setName(courseDto.getName());
-                existing.setDescription(courseDto.getDescription());
-                existing.setNoOfSlot(courseDto.getNoOfSlot());
+                existing.setName(courseAddUpdateDTO.getName());
+                existing.setDescription(courseAddUpdateDTO.getDescription());
+                existing.setNoOfSlot(courseAddUpdateDTO.getNoOfSlot());
 
                 repository.save(existing);
 
-                return ResponseEntity.ok("Successfully Updated Course details for " + id);
+                return ResponseEntity.status(HttpStatus.OK)
+                        .body(ApiResponse.success("Successfully Updated Course details for " + id));
 
             } else {
 
-                return ResponseEntity.ok("while updating the no of slots should not be less");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(ApiResponse.failure("Number of slots","while updating the no of slots should not be less"));
             }
 
         } else {
             //else update all the details (except tag)
 
-            existing.setName(courseDto.getName());
-            existing.setDescription(courseDto.getDescription());
-            existing.setNoOfSlot(courseDto.getNoOfSlot());
-            existing.setFee(courseDto.getFee());
-            existing.setDuration(courseDto.getDuration());
+            existing.setName(courseAddUpdateDTO.getName());
+            existing.setDescription(courseAddUpdateDTO.getDescription());
+            existing.setNoOfSlot(courseAddUpdateDTO.getNoOfSlot());
+            existing.setFee(courseAddUpdateDTO.getFee());
+            existing.setDuration(courseAddUpdateDTO.getDuration());
 
             repository.save(existing);
 
-            return ResponseEntity.ok("Successfully Updated Course details for " + id);
+            return ResponseEntity.status(HttpStatus.OK)
+                    .body(ApiResponse.success("Successfully Updated Course details for " + id));
         }
 
 
@@ -142,13 +155,14 @@ public class CourseServiceImpl implements CourseService {
         if (course == null) {
             //if it is not present
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body("Course id: " + id + " is not present");
+                    .body(ApiResponse.failure("Course id","Course id: " + id + " is not present"));
         }
         List<Enrollment> courseEnrolled = enrollmentRepository.findByCourse_CourseId(id);
         if (courseEnrolled.isEmpty()) {
             //no course is assigned to student
             repository.deleteById(id);
-            return ResponseEntity.ok("Successfully Deleted Course details for course id: " + id);
+            return ResponseEntity.status(HttpStatus.OK)
+                    .body(ApiResponse.success("Successfully Deleted Course details for course id: " + id));
 
         } else {
 
@@ -159,7 +173,7 @@ public class CourseServiceImpl implements CourseService {
 
             if (hasActiveEnrollment) {
                 return ResponseEntity.status(HttpStatus.CONFLICT)
-                        .body("Failed to delete course detail\nCourse has active enrollments.");
+                        .body(ApiResponse.failure("Course Allocation","Failed to delete course detail\nCourse has active enrollments."));
             }
         }
         //else delete the course by id
@@ -170,26 +184,27 @@ public class CourseServiceImpl implements CourseService {
         repository.deleteById(id);
 
 
-        return ResponseEntity.ok("Successfully Deleted Course details for course id: " + id);
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(ApiResponse.success("Successfully Deleted Course details for course id: " + id));
     }
 
 
     @Override
-    public ResponseEntity<?> getCourseDetail(String id) {
+    public ResponseEntity<ApiResponse<CourseDto>> getCourseDetail(String id) {
 
         Course course = repository.findById(id).orElse(null);
         if (course == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body("Course id: " + id + " not present.");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.failure("Course id","Course id: " + id + " not present."));
         }
 
         return ResponseEntity.status(HttpStatus.OK)
-                .body(courseMapper.courseToCourseDto(course));
+                .body( ApiResponse.success(List.of(courseMapper.courseToCourseDto(course))));
     }
 
 
     @Override
-    public ResponseEntity<?> getAllCourseDetail() {
+    public ResponseEntity<ApiResponse<CourseDto>> getAllCourseDetail() {
 
         List<CourseDto> courses = repository.findAll()
                 .stream()
@@ -199,9 +214,9 @@ public class CourseServiceImpl implements CourseService {
         if (courses.isEmpty()) {
 
             return ResponseEntity.status(HttpStatus.OK)
-                    .body("No Data Found");
+                    .body(ApiResponse.failure("Course Table","No Data Found"));
         }
         return ResponseEntity.status(HttpStatus.OK)
-                .body(courses);
+                .body( ApiResponse.success(courses));
     }
 }

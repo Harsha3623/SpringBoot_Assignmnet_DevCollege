@@ -1,18 +1,16 @@
 package com.example.DevCollege.dto;
 
-
 import com.example.DevCollege.validation.ValidTags;
-import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 
-public class StudentDto {
-
-
-
-    private String studentId;
-
+public class StudentAddUpdateDTO {
 
 
     @NotBlank(message = "Student name is required")
+    @Pattern(regexp = "^[A-Za-z ]+$", message = "Name must contain only letters and spaces")
     private String name;
 
 
@@ -33,15 +31,6 @@ public class StudentDto {
     @Min(value = 1,message = "wallet amount should not be negative.")
     private Float walletAmount;
 
-
-
-    public String getStudentId() {
-        return studentId;
-    }
-
-    public void setStudentId(String studentId) {
-        this.studentId = studentId;
-    }
 
     public String getName() {
         return name;

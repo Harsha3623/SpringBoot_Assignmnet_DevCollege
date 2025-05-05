@@ -5,8 +5,6 @@ import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
-import org.springframework.validation.BindingResult;
-import org.springframework.validation.FieldError;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -14,8 +12,11 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.sql.SQLIntegrityConstraintViolationException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -23,37 +24,69 @@ public class GlobalExceptionHandler {
 
     // Handle validation exceptions (e.g., @Valid annotations)
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Map<String, String>> handleValidationExceptions(MethodArgumentNotValidException ex) {
-        BindingResult bindingResult = ex.getBindingResult();
-        Map<String, String> errors = new HashMap<>();
-
-        // Extract each field error and add it to the map
-        for (FieldError error : bindingResult.getFieldErrors()) {
-            errors.put(error.getField(), error.getDefaultMessage());
-        }
+    public ResponseEntity<ValidationErrorResponse> handleValidationExceptions(MethodArgumentNotValidException ex) {
+//        BindingResult bindingResult = ex.getBindingResult();
+//        Map<String, String> errors = new HashMap<>();
+//
+//        // Extract each field error and add it to the map
+//        for (FieldError error : bindingResult.getFieldErrors()) {
+//            errors.put(error.getField(), error.getDefaultMessage());
+//        }
 
         // Return errors with BAD_REQUEST (400) status
-        return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
+        List<FieldErrorResponse> errors = ex.getBindingResult()
+                .getFieldErrors()
+                .stream()
+                .map(error-> new FieldErrorResponse(error.getField(), error.getDefaultMessage()))
+                .collect(Collectors.toList());
+        return new ResponseEntity<>(new ValidationErrorResponse(errors), HttpStatus.BAD_REQUEST);
     }
 
 
     // Handle general validation errors (e.g., invalid enum values, etc.)
     @ExceptionHandler(ConstraintViolationException.class)
-    public ResponseEntity<Map<String, String>> handleConstraintViolationExceptions(ConstraintViolationException ex) {
-        Map<String, String> errors = new HashMap<>();
-        errors.put("error", ex.getMessage());
+    public ResponseEntity<ValidationErrorResponse> handleConstraintViolationExceptions(ConstraintViolationException ex) {
+//        Map<String, String> errors = new HashMap<>();
+//        errors.put("error", ex.getMessage());
+        List<FieldErrorResponse> errors = ex.getConstraintViolations()
+                .stream()
+                .map(violation-> new FieldErrorResponse(
+                        violation.getPropertyPath().toString(),
+                        violation.getMessage()))
+                .collect(Collectors.toList());
 
-        return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<>(new ValidationErrorResponse(errors), HttpStatus.BAD_REQUEST);
     }
 
 
     // Handle JSON parse errors (e.g., invalid data types, malformed JSON)
     @ExceptionHandler(HttpMessageNotReadableException.class)
-    public ResponseEntity<Map<String, String>> handleMessageNotReadableException(HttpMessageNotReadableException ex) {
-        Map<String, String> error = new HashMap<>();
-        error.put("error", "Malformed JSON or invalid request body. Please check the format of your request.");
-        error.put("details: ", ex.getMessage());
-        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+    public ResponseEntity<?> handleMessageNotReadableException(HttpMessageNotReadableException ex) {
+//        Map<String, String> error = new HashMap<>();
+//        error.put("error", "Malformed JSON or invalid request body. Please check the format of your request.");
+
+//        error.put("details: ", ex.getMessage());
+
+        List<FieldErrorResponse> error  = new ArrayList<>();
+        if(ex.getMessage().contains("Unrecognized field")){
+            error.add(new FieldErrorResponse("Unrecognized field", "Unrecognized field '" + extractUnrecognizedField(ex.getMessage()) + "' in the request body."));
+             return new ResponseEntity<>( new ValidationErrorResponse(error),HttpStatus.BAD_REQUEST);
+
+        }
+
+
+        String requiredMessage = getRequiredMessaage(ex.getMessage());
+        error.add(new FieldErrorResponse("JSON Parse error","Malformed JSON or invalid request body. " +requiredMessage));
+
+        return new ResponseEntity<>(new ValidationErrorResponse(error), HttpStatus.BAD_REQUEST);
+    }
+
+    //get the required message format for the error mismatched input
+    private String getRequiredMessaage(String message) {
+        int index = message.indexOf("Cannot coerce ");
+        String[] values =(message.substring(index)).split(" ");
+        String value = values[4];
+        return "Cannot convert "+values[2]+" from "+value+" to "+values[6];
     }
 
 
@@ -73,33 +106,61 @@ public class GlobalExceptionHandler {
 
     // Handle HttpMethodNotSupportedException (e.g., using GET instead of POST)
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
-    public ResponseEntity<Map<String, String>> handleMethodNotAllowedException(HttpRequestMethodNotSupportedException ex) {
-        Map<String, String> error = new HashMap<>();
-        error.put("Error", "Http method not allowed.");
-        error.put("Details:", ex.getMessage());
+    public ResponseEntity<ValidationErrorResponse> handleMethodNotAllowedException(HttpRequestMethodNotSupportedException ex) {
+        List<FieldErrorResponse> errors = List.of(
+                new FieldErrorResponse("Http Method", "Http method not allowed. " + ex.getMessage())
+        );
 
-        return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).body(error);
+        return new ResponseEntity<>(new ValidationErrorResponse(errors), HttpStatus.METHOD_NOT_ALLOWED);
     }
+
 
 
     // Handle resource not found (e.g., no matching URL for the request)
     @ExceptionHandler(NoResourceFoundException.class)
-    public ResponseEntity<Map<String, String>> handleNoResourceFoundException(NoResourceFoundException ex) {
-        Map<String, String> error = new HashMap<>();
-        error.put("Error:", "No method found");
-        error.put("Detail:", ex.getLocalizedMessage());
+    public ResponseEntity<ValidationErrorResponse> handleNoResourceFoundException(NoResourceFoundException ex) {
+        List<FieldErrorResponse> errors = List.of(
+                new FieldErrorResponse("NoResourceFound", "No method found. " + ex.getLocalizedMessage())
+        );
 
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+        return new ResponseEntity<>(new ValidationErrorResponse(errors), HttpStatus.NOT_FOUND);
     }
+
 
 
     // Handle SQL integrity constraint violations (e.g., foreign key violations)
     @ExceptionHandler(SQLIntegrityConstraintViolationException.class)
-    public ResponseEntity<Map<String, String>> handleSqlIntegrityConstraintViolationException(SQLIntegrityConstraintViolationException exception) {
-        Map<String, String> error = new HashMap<>();
-        error.put("Error:", "SQL Integrity Constraint violation");
-        error.put("Detail:", exception.getMessage());
+    public ResponseEntity<ValidationErrorResponse> handleSqlIntegrityConstraintViolationException(SQLIntegrityConstraintViolationException ex) {
+        String originalMessage = ex.getMessage();
 
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        String userFriendlyMessage;
+
+        if (originalMessage.contains("Duplicate entry")) {
+            //message: Duplicate entry 'HTML' for key 'course.name_UNIQUE'
+            String[] parts = originalMessage.split("'");
+            if (parts.length >= 2) {
+                String duplicateValue = parts[1]; // 'HTML'
+                userFriendlyMessage = "Duplicate entry '" + duplicateValue + "' is not allowed.";
+            } else {
+                userFriendlyMessage = "Duplicate entry found. Please use a unique value.";
+            }
+        } else {
+            // fallback message
+            userFriendlyMessage = "Database constraint violation occurred.";
+        }
+
+        List<FieldErrorResponse> errors = List.of(
+                new FieldErrorResponse("SQL Integrity", userFriendlyMessage)
+        );
+
+        return new ResponseEntity<>(new ValidationErrorResponse(errors), HttpStatus.BAD_REQUEST);
+    }
+
+
+    private String extractUnrecognizedField(String errorMessage) {
+        // Look for a pattern that matches "Unrecognized field <field_name>"
+        int startIdx = errorMessage.indexOf("Unrecognized field \"") + "Unrecognized field \"".length();
+        int endIdx = errorMessage.indexOf("\"", startIdx);
+        return errorMessage.substring(startIdx, endIdx);
     }
 }

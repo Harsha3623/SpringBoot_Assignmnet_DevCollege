@@ -1,5 +1,6 @@
 package com.example.DevCollege.services;
 
+import com.example.DevCollege.dto.CourseAddUpdateDTO;
 import com.example.DevCollege.dto.CourseDto;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -7,9 +8,9 @@ import org.springframework.http.ResponseEntity;
 public interface CourseService {
 
 
-    ResponseEntity<?> addCourseDetails(CourseDto courseDto);
+    ResponseEntity<?> addCourseDetails(CourseAddUpdateDTO courseAddUpdateDTO);
 
-    ResponseEntity<?> updateCourseDetails(String id, @Valid CourseDto courseDto);
+    ResponseEntity<?> updateCourseDetails(String id, @Valid CourseAddUpdateDTO courseAddUpdateDTO);
 
     ResponseEntity<?> deleteCourseDetails(String id);
 

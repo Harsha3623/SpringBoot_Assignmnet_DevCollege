@@ -1,14 +1,12 @@
 package com.example.DevCollege.dto;
 
-
-import jakarta.validation.constraints.*;
-
 import com.example.DevCollege.validation.ValidTags;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
-public class CourseDto {
-
-
-    String courseId;
+public class CourseAddUpdateDTO {
 
 
     @NotBlank(message = "Course Name is mandatory")
@@ -43,6 +41,17 @@ public class CourseDto {
     private String tag;
 
 
+    public CourseAddUpdateDTO() {
+    }
+
+    public CourseAddUpdateDTO(String name, String description, Integer noOfSlot, Float fee, Integer duration, String tag) {
+        this.name = name;
+        this.description = description;
+        this.noOfSlot = noOfSlot;
+        this.fee = fee;
+        this.duration = duration;
+        this.tag = tag;
+    }
 
     public String getName() {
         return name;
@@ -90,13 +99,5 @@ public class CourseDto {
 
     public void setTag(String tag) {
         this.tag = tag;
-    }
-
-    public String getCourseId() {
-        return courseId;
-    }
-
-    public void setCourseId(String courseId) {
-        this.courseId = courseId;
     }
 }

@@ -21,8 +21,6 @@ public class EnrollmentAddDto {
     //not null for both integer and datetime
     @NotNull(message = "Course start date time is required.")
     //format the user input to this format
-
-
     @JsonFormat(pattern = "yyyy/MM/dd HH:mm:ss")
     private LocalDateTime courseStartDatetime;
 

@@ -1,5 +1,6 @@
 package com.example.DevCollege.controller;
 
+import com.example.DevCollege.dto.CourseAddUpdateDTO;
 import com.example.DevCollege.dto.CourseDto;
 import com.example.DevCollege.services.CourseService;
 import jakarta.validation.Valid;
@@ -18,15 +19,15 @@ public class CourseController {
 
 
     @PostMapping("/addcourse")
-    public ResponseEntity<?> addCourseDetails(@Valid @RequestBody CourseDto courseDto) {
+    public ResponseEntity<?> addCourseDetails(@Valid @RequestBody CourseAddUpdateDTO courseAddUpdateDTO) {
 
-        return service.addCourseDetails(courseDto);
+        return service.addCourseDetails(courseAddUpdateDTO);
     }
 
 
     @PutMapping("/updatecourse/{id}")
-    public ResponseEntity<?> updateCourseDetails(@PathVariable String id, @Valid @RequestBody CourseDto courseDto) {
-        return service.updateCourseDetails(id, courseDto);
+    public ResponseEntity<?> updateCourseDetails(@PathVariable String id, @Valid @RequestBody CourseAddUpdateDTO courseAddUpdateDTO) {
+        return service.updateCourseDetails(id, courseAddUpdateDTO);
     }
 
 
