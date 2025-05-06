@@ -30,7 +30,7 @@ public enum Qualification {
         return qualificationName;
     }
 
-    // Optionally, you can add a method to check if a string matches any qualification
+    //method to check if a string matches any qualification
     public static boolean isValidQualification(String tag) {
         for (Qualification qualification : values()) {
             if (qualification.getQualificationName().equalsIgnoreCase(tag)) {

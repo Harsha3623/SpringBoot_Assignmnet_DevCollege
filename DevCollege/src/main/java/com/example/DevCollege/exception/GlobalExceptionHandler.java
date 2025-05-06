@@ -1,5 +1,9 @@
 package com.example.DevCollege.exception;
 
+import com.example.DevCollege.exception.custom.CourseSlotsHandler;
+import com.example.DevCollege.exception.custom.EnrollmentHandler;
+import com.example.DevCollege.exception.custom.IDNotFound;
+import com.example.DevCollege.exception.custom.WalletAmountInsufficient;
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
@@ -25,13 +29,7 @@ public class GlobalExceptionHandler {
     // Handle validation exceptions (e.g., @Valid annotations)
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ValidationErrorResponse> handleValidationExceptions(MethodArgumentNotValidException ex) {
-//        BindingResult bindingResult = ex.getBindingResult();
-//        Map<String, String> errors = new HashMap<>();
-//
-//        // Extract each field error and add it to the map
-//        for (FieldError error : bindingResult.getFieldErrors()) {
-//            errors.put(error.getField(), error.getDefaultMessage());
-//        }
+
 
         // Return errors with BAD_REQUEST (400) status
         List<FieldErrorResponse> errors = ex.getBindingResult()
@@ -39,6 +37,7 @@ public class GlobalExceptionHandler {
                 .stream()
                 .map(error-> new FieldErrorResponse(error.getField(), error.getDefaultMessage()))
                 .collect(Collectors.toList());
+
         return new ResponseEntity<>(new ValidationErrorResponse(errors), HttpStatus.BAD_REQUEST);
     }
 
@@ -46,8 +45,7 @@ public class GlobalExceptionHandler {
     // Handle general validation errors (e.g., invalid enum values, etc.)
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<ValidationErrorResponse> handleConstraintViolationExceptions(ConstraintViolationException ex) {
-//        Map<String, String> errors = new HashMap<>();
-//        errors.put("error", ex.getMessage());
+
         List<FieldErrorResponse> errors = ex.getConstraintViolations()
                 .stream()
                 .map(violation-> new FieldErrorResponse(
@@ -55,17 +53,16 @@ public class GlobalExceptionHandler {
                         violation.getMessage()))
                 .collect(Collectors.toList());
 
+
         return new ResponseEntity<>(new ValidationErrorResponse(errors), HttpStatus.BAD_REQUEST);
+
     }
 
 
     // Handle JSON parse errors (e.g., invalid data types, malformed JSON)
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<?> handleMessageNotReadableException(HttpMessageNotReadableException ex) {
-//        Map<String, String> error = new HashMap<>();
-//        error.put("error", "Malformed JSON or invalid request body. Please check the format of your request.");
 
-//        error.put("details: ", ex.getMessage());
 
         List<FieldErrorResponse> error  = new ArrayList<>();
         if(ex.getMessage().contains("Unrecognized field")){
@@ -76,23 +73,36 @@ public class GlobalExceptionHandler {
 
 
         String requiredMessage = getRequiredMessaage(ex.getMessage());
-        error.add(new FieldErrorResponse("JSON Parse error","Malformed JSON or invalid request body. " +requiredMessage));
+        error.add(new FieldErrorResponse("Unrecognized field","Malformed JSON or invalid request body. " +requiredMessage));
 
         return new ResponseEntity<>(new ValidationErrorResponse(error), HttpStatus.BAD_REQUEST);
     }
 
+
     //get the required message format for the error mismatched input
     private String getRequiredMessaage(String message) {
-        int index = message.indexOf("Cannot coerce ");
-        String[] values =(message.substring(index)).split(" ");
-        String value = values[4];
-        return "Cannot convert "+values[2]+" from "+value+" to "+values[6];
+
+        if(message.contains("Cannot coerce")) {
+
+            int index = message.indexOf("Cannot coerce ");
+            String[] values = (message.substring(index)).split(" ");
+            String value = values[4];
+            return "Cannot convert " + values[2] + " from " + value + " to " + values[6];
+
+        }else{
+
+            //if error message is for json parse error and invalid format
+            String[] values = message.split(" ");
+
+            return "Json Parse error for token: "+values[5];
+        }
     }
 
 
     // Handle InvalidFormatException (used when Jackson can't convert a string to a number)
     @ExceptionHandler(InvalidFormatException.class)
     public ResponseEntity<Map<String, String>> handleInvalidFormatException(InvalidFormatException ex) {
+
         Map<String, String> error = new HashMap<>();
         String invalidValue = ex.getValue() != null ? ex.getValue().toString() : "null";
         String fieldName = ex.getPathReference();
@@ -100,6 +110,7 @@ public class GlobalExceptionHandler {
 
         error.put("error", String.format("Invalid value '%s' for field '%s'. Expected %s but got %s",
                 invalidValue, fieldName, expectedType, ex.getValue().getClass().getSimpleName()));
+
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
 
@@ -107,11 +118,13 @@ public class GlobalExceptionHandler {
     // Handle HttpMethodNotSupportedException (e.g., using GET instead of POST)
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
     public ResponseEntity<ValidationErrorResponse> handleMethodNotAllowedException(HttpRequestMethodNotSupportedException ex) {
+
         List<FieldErrorResponse> errors = List.of(
                 new FieldErrorResponse("Http Method", "Http method not allowed. " + ex.getMessage())
         );
 
         return new ResponseEntity<>(new ValidationErrorResponse(errors), HttpStatus.METHOD_NOT_ALLOWED);
+
     }
 
 
@@ -131,6 +144,7 @@ public class GlobalExceptionHandler {
     // Handle SQL integrity constraint violations (e.g., foreign key violations)
     @ExceptionHandler(SQLIntegrityConstraintViolationException.class)
     public ResponseEntity<ValidationErrorResponse> handleSqlIntegrityConstraintViolationException(SQLIntegrityConstraintViolationException ex) {
+
         String originalMessage = ex.getMessage();
 
         String userFriendlyMessage;
@@ -138,13 +152,18 @@ public class GlobalExceptionHandler {
         if (originalMessage.contains("Duplicate entry")) {
             //message: Duplicate entry 'HTML' for key 'course.name_UNIQUE'
             String[] parts = originalMessage.split("'");
+
             if (parts.length >= 2) {
                 String duplicateValue = parts[1]; // 'HTML'
                 userFriendlyMessage = "Duplicate entry '" + duplicateValue + "' is not allowed.";
+
             } else {
                 userFriendlyMessage = "Duplicate entry found. Please use a unique value.";
+
             }
+
         } else {
+
             // fallback message
             userFriendlyMessage = "Database constraint violation occurred.";
         }
@@ -158,9 +177,58 @@ public class GlobalExceptionHandler {
 
 
     private String extractUnrecognizedField(String errorMessage) {
+
         // Look for a pattern that matches "Unrecognized field <field_name>"
         int startIdx = errorMessage.indexOf("Unrecognized field \"") + "Unrecognized field \"".length();
         int endIdx = errorMessage.indexOf("\"", startIdx);
         return errorMessage.substring(startIdx, endIdx);
     }
+
+
+    //custom exceptions for id not found
+    @ExceptionHandler(IDNotFound.class)
+    public ResponseEntity<ValidationErrorResponse> customexception(IDNotFound exeption){
+
+        List<FieldErrorResponse> errorResponse = List.of(
+                new FieldErrorResponse(exeption.getFeild(), exeption.getMessage())
+        );
+
+        return new ResponseEntity(new ValidationErrorResponse(errorResponse),HttpStatus.BAD_REQUEST);
+    }
+
+
+    @ExceptionHandler(WalletAmountInsufficient.class)
+    public ResponseEntity<ValidationErrorResponse> wallletAmountInsufficient(WalletAmountInsufficient exception){
+
+        List<FieldErrorResponse> errorResponses = List.of(
+                new FieldErrorResponse(exception.getField(), exception.getMessage())
+        );
+
+        return new ResponseEntity(new ValidationErrorResponse(errorResponses),HttpStatus.BAD_REQUEST);
+    }
+
+
+    @ExceptionHandler(EnrollmentHandler.class)
+    public ResponseEntity<ValidationErrorResponse> enrollmentHandler(EnrollmentHandler exception){
+
+        List<FieldErrorResponse> errorResponses = List.of(
+                new FieldErrorResponse(exception.getField(), exception.getMessage())
+        );
+
+        return new ResponseEntity(new ValidationErrorResponse(errorResponses),HttpStatus.BAD_REQUEST);
+    }
+
+
+    @ExceptionHandler(CourseSlotsHandler.class)
+    public ResponseEntity<ValidationErrorResponse>  courseSlotsHandler(CourseSlotsHandler exception){
+
+        List<FieldErrorResponse> errorResponses = List.of(
+                new FieldErrorResponse(exception.getField(), exception.getMessage())
+        );
+
+        return new ResponseEntity(new ValidationErrorResponse(errorResponses),HttpStatus.BAD_REQUEST);
+    }
+
+
+
 }

@@ -4,10 +4,15 @@ import com.example.DevCollege.dto.*;
 import com.example.DevCollege.entity.Course;
 import com.example.DevCollege.entity.Enrollment;
 import com.example.DevCollege.entity.Student;
+import com.example.DevCollege.exception.custom.CourseSlotsHandler;
+import com.example.DevCollege.exception.custom.EnrollmentHandler;
+import com.example.DevCollege.exception.custom.IDNotFound;
+import com.example.DevCollege.exception.custom.WalletAmountInsufficient;
 import com.example.DevCollege.mapper.*;
 import com.example.DevCollege.repository.CourseRepository;
 import com.example.DevCollege.repository.EnrollmentRepository;
 import com.example.DevCollege.repository.StudentRepository;
+import com.example.DevCollege.response.ApiResponse;
 import com.example.DevCollege.services.EnrollmentService;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,6 +56,10 @@ public class EnrollmentServiceImpl implements EnrollmentService {
     private CourseSuggestionMapper courseSuggestionMapper;
 
 
+
+
+
+
     //auto generating the enrolId for every enrollment
     private String getEnrollmentID() {
 
@@ -68,6 +77,10 @@ public class EnrollmentServiceImpl implements EnrollmentService {
     }
 
 
+
+
+
+
     @Override
     @Transactional
     public ResponseEntity<?> addEnrollmentForCourse(EnrollmentAddDto enrollmentAddDto) {
@@ -76,10 +89,15 @@ public class EnrollmentServiceImpl implements EnrollmentService {
 
         Course course = courseRepository.findById(enrollmentAddDto.getCourseId()).orElse(null);
 
-        if (student == null || course == null) {
 
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body("Either student id or course id is not presnet.");
+        if (student == null || course == null) {
+            if(student==null){
+                throw new IDNotFound("Student Id","Student Id: "+enrollmentAddDto.getStudentId()+" is invalid.");
+            }else{
+                throw new IDNotFound("Course Id","Course Id: "+enrollmentAddDto.getCourseId()+" is invalid.");
+            }
+
+
         }
 
         Enrollment enrollment = enrollmentAddMapper.enrollmentAddDtoToEnrollment(enrollmentAddDto);
@@ -88,8 +106,7 @@ public class EnrollmentServiceImpl implements EnrollmentService {
         //if student have less amount then course fee --> don't allow
         if (course.getFee() > student.getWalletAmount()) {
 
-            return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE)
-                    .body("Student wallet amount is less then course fee.");
+            throw new WalletAmountInsufficient("Student wallet amount","Student wallet amount is less then course fee.");
         }
 
         List<Enrollment> studentEnrollments = enrollmentRepository.findByStudent_StudentId(enrollmentAddDto.getStudentId());
@@ -106,8 +123,7 @@ public class EnrollmentServiceImpl implements EnrollmentService {
 
         if (!isValid) {
 
-            return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body("Student have already enrolled for a course");
+            throw new EnrollmentHandler("Enrolled","Student have already enrolled for a course");
         }
 
         //validate whether the student is already enrolled for that course.
@@ -117,8 +133,8 @@ public class EnrollmentServiceImpl implements EnrollmentService {
 
                 if ((e.getCourse().getCourseId()).equals(enrollmentAddDto.getCourseId())) {
 
-                    return ResponseEntity.status(HttpStatus.CONFLICT)
-                            .body("Student " + e.getStudent().getName() + " already enrolled for " +
+
+                    throw new EnrollmentHandler("Enrolled","Student " + e.getStudent().getName() + " already enrolled for " +
                                     "course " + e.getCourse().getName());
                 }
             }
@@ -127,9 +143,7 @@ public class EnrollmentServiceImpl implements EnrollmentService {
         //check the slots
         if (course.getNoOfSlot() == 0) {
 
-            return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE)
-                    .body("The Course Slots are already filled");
-
+            throw new CourseSlotsHandler("Course Slots","The course slots are already filled and not available.");
         }
 
         //after verifying all the validations then update course student and enrollment details
@@ -160,11 +174,14 @@ public class EnrollmentServiceImpl implements EnrollmentService {
         enrollmentRepository.save(enrollment);
 
         return ResponseEntity.status(HttpStatus.OK)
-                .body("Successfully Enrolled for " + student.getName() +
-                        " in course " + course.getName() + " for enrollment id:" + enrollment.getEnrollId());
+                .body(ApiResponse.success("Successfully Enrolled for " + student.getName() +
+                        " in course " + course.getName() + " for enrollment id:" + enrollment.getEnrollId()));
 
 
     }
+
+
+
 
     @Override
     public ResponseEntity<?> getEnrollmentDetailsUsingID(String id) {
@@ -175,8 +192,7 @@ public class EnrollmentServiceImpl implements EnrollmentService {
 
         if (enrollmentDetailsDto == null) {
 
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body("Enrollment id: " + id + " Not exists.");
+            throw new IDNotFound("Enroll Id","Enroll ID:" +id+" Not exists.");
         }
 
         //setting the student link
@@ -191,6 +207,9 @@ public class EnrollmentServiceImpl implements EnrollmentService {
 
     }
 
+
+
+
     @Override
     public ResponseEntity<?> getAllEnrollmentDetails() {
 
@@ -198,8 +217,7 @@ public class EnrollmentServiceImpl implements EnrollmentService {
 
         if (enrollments.isEmpty()) {
 
-            return ResponseEntity.status(HttpStatus.OK)
-                    .body("No data found.");
+            throw new IDNotFound("Enroll Data","No data found for Enrollment.");
         }
 
         //converting enrollment to enrollmentDetailsDto
@@ -218,8 +236,13 @@ public class EnrollmentServiceImpl implements EnrollmentService {
                 }).collect(Collectors.toList());
 
         return ResponseEntity.status(HttpStatus.OK)
-                .body(enrollmentDetailsDtoList);
+                .body(ApiResponse.success(enrollmentDetailsDtoList));
     }
+
+
+
+
+
 
     @Override
     public ResponseEntity<?> getEnrollmentDetailsForStudent(String stdId) {
@@ -229,16 +252,16 @@ public class EnrollmentServiceImpl implements EnrollmentService {
 
         if (student == null) {
 
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body("Student id: " + stdId + " is not present in the table.");
+
+            throw new IDNotFound("Student Id","Student Id: "+ stdId+" is not present in the student table.");
         }
 
         List<Enrollment> enrollments = enrollmentRepository.findByStudent_StudentId(stdId);
 
         if (enrollments.isEmpty()) {
 
-            return ResponseEntity.status(HttpStatus.OK)
-                    .body(student.getName() + " doesn't enroll for any course.");
+
+            throw new IDNotFound("Enroll Detail",student.getName()+" doesn't enrolled for any course.");
         }
 
         List<EnrollmentDetailsDto> enrollmentDetailsDtoList = enrollments.stream()
@@ -254,9 +277,12 @@ public class EnrollmentServiceImpl implements EnrollmentService {
                 }).collect(Collectors.toList());
 
         return ResponseEntity.status(HttpStatus.OK)
-                .body(enrollmentDetailsDtoList);
+                .body( ApiResponse.success(enrollmentDetailsDtoList));
 
     }
+
+
+
 
     @Override
     @Transactional
@@ -266,25 +292,18 @@ public class EnrollmentServiceImpl implements EnrollmentService {
 
         if (enrollment == null) {
 
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body("Enrollment id: " + enrollId + " is not present.");
+
+            throw new IDNotFound("Enroll Id","Enrollment id: "+ enrollId+" is not present");
         }
 
         if (enrollment.getStudent() == null) {
 
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body("Student not found");
+
+            throw new IDNotFound("No student found","No student is present for enroll id: "+enrollId );
         }
         //course link ref
         Course course = enrollment.getCourse();
 
-        //check whether course end date is completed compared to current date time
-//        if ((LocalDateTime.now()).isAfter(enrollment.getCourseEndDatetime())) {
-//
-//            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-//                    .body("Course end date is completed on: " + enrollment.getCourseEndDatetime()
-//                            + " and status cannot be changed");
-//        }
 
         String oldStatus = enrollment.getStatus();
         //if status is allocated --> in progress or cancelled
@@ -335,8 +354,7 @@ public class EnrollmentServiceImpl implements EnrollmentService {
             } else {
 
                 //if want to change from allocated--> completed throw error
-                return ResponseEntity.status(HttpStatus.CONFLICT)
-                        .body("Enrollment status: " + enrollment.getStatus() + " and cannot be changed to " + enrollmentStatus.getStatus());
+                throw new EnrollmentHandler("Enroll status","Enrollment status: " + enrollment.getStatus() + " and cannot be changed to " + enrollmentStatus.getStatus());
 
             }
 
@@ -352,15 +370,19 @@ public class EnrollmentServiceImpl implements EnrollmentService {
 
         } else {
 
-            return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body("Enrollment status: " + enrollment.getStatus() + " and cannot be changed to " + enrollmentStatus.getStatus());
+            throw new EnrollmentHandler("Enroll status","Enrollment status: " + enrollment.getStatus() + " and cannot be changed to " + enrollmentStatus.getStatus());
         }
 
         enrollmentRepository.save(enrollment);
 
         return ResponseEntity.status(HttpStatus.OK)
-                .body("Successfully change the status from " + oldStatus + " to " + enrollmentStatus.getStatus() + " for enroll id: " + enrollment.getEnrollId());
+                .body(ApiResponse.success("Successfully change the status from " + oldStatus + " to " + enrollmentStatus.getStatus() + " for enroll id: " + enrollment.getEnrollId()));
     }
+
+
+
+
+
 
     @Override
     public ResponseEntity<?> checkAvailability(String courseId) {
@@ -369,22 +391,20 @@ public class EnrollmentServiceImpl implements EnrollmentService {
 
         if (course == null) {
 
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body("Course ID :" + courseId + " doesn't exists");
+            throw new IDNotFound("Course Id","Course ID: "+courseId+" doesn't exists.");
         }
 
 
         //check whether the slots are not present
         if (course.getNoOfSlot() == 0) {
 
-            return ResponseEntity.status(HttpStatus.OK)
-                    .body("Course id:" + courseId + ", course name: " + course.getName()
-                            + " is not available for enrolment");
+            throw new IDNotFound("Course Slot","Course id:" + courseId + ", course name: " + course.getName()+
+                    "is not available for enrolment");
         }
 
         return ResponseEntity.status(HttpStatus.OK)
-                .body("Course id:" + courseId + ", course name: " + course.getName()
-                        + " available for enrolment with number of slots: " + course.getNoOfSlot());
+                .body(ApiResponse.success("Course id:" + courseId + ", course name: " + course.getName()
+                        + " available for enrolment with number of slots: " + course.getNoOfSlot()));
 
     }
 
@@ -395,8 +415,7 @@ public class EnrollmentServiceImpl implements EnrollmentService {
 
         if (student == null) {
 
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body("Student Id: " + studentId + " doesn't exist.");
+            throw new IDNotFound("Student Id","Student Id: " + studentId + " doesn't exist.");
         }
 
         String[] qualifications = student.getHighestQualification().toUpperCase().split(",");
@@ -407,7 +426,7 @@ public class EnrollmentServiceImpl implements EnrollmentService {
 
         for (Course c : courses) {
 
-            if ((isContains(c.getTag(), qualifications)) && (c.getNoOfSlot() > 3)) {
+            if ((isContains(c.getTag(), qualifications)) && (c.getNoOfSlot() >= 1)) {
 
                 suggestions.add(c);
             }
@@ -418,8 +437,10 @@ public class EnrollmentServiceImpl implements EnrollmentService {
                 .collect(Collectors.toList());
 
         //return course dto
-        return ResponseEntity.status(HttpStatus.OK).body(courseSuggestionDtos);
+        return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.success(courseSuggestionDtos));
     }
+
+
 
     private boolean isContains(String tag, String[] qualifications) {
 

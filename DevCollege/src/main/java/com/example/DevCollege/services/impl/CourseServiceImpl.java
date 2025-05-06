@@ -4,6 +4,8 @@ import com.example.DevCollege.dto.CourseAddUpdateDTO;
 import com.example.DevCollege.dto.CourseDto;
 import com.example.DevCollege.entity.Course;
 import com.example.DevCollege.entity.Enrollment;
+import com.example.DevCollege.exception.custom.CourseSlotsHandler;
+import com.example.DevCollege.exception.custom.IDNotFound;
 import com.example.DevCollege.mapper.CourseAddUpdateMapper;
 import com.example.DevCollege.mapper.CourseMapper;
 import com.example.DevCollege.repository.CourseRepository;
@@ -22,27 +24,31 @@ import java.util.stream.Collectors;
 @Service
 public class CourseServiceImpl implements CourseService {
 
-    //defining what are the course tags should be there
-    private List<String> allowedQualification = List.of(
-            "B.E", "B.TECH", "DIPLOMA", "M.E", "M.TECH", "M.PHIL", "MS",
-            "BBA", "BCOM", "BSC", "MSC", "BCA", "MCA", "LLB", "MBBS", "MBA"
-    );
+
 
 
     @Autowired
     private CourseRepository repository;
 
 
+
+
     @Autowired
     CourseAddUpdateMapper courseAddUpdateMapper;
+
+
 
     @Autowired
     CourseMapper courseMapper;
 
 
+
+
     //enrollment repo
     @Autowired
     EnrollmentRepository enrollmentRepository;
+
+
 
 
     //for generating id in sequence manner
@@ -58,24 +64,15 @@ public class CourseServiceImpl implements CourseService {
     }
 
 
+
+
     //add course
     @Override
     @Transactional
-    public ResponseEntity<?> addCourseDetails(CourseAddUpdateDTO courseAddUpdateDTO) {
+    public ResponseEntity<ApiResponse<?>> addCourseDetails(CourseAddUpdateDTO courseAddUpdateDTO) {
 
         Course course = courseAddUpdateMapper.courseAddUpdateDtoToCourse(courseAddUpdateDTO);
 
-        //validating the tags for multiple inputs
-        String[] qualification = (course.getTag()).split(",");
-
-        for (String s : qualification) {
-
-            if (!allowedQualification.contains(s.toUpperCase())) {
-
-                return ResponseEntity.ok("Failed to add course details.\n" +
-                        "Allowed Qualifications: " + allowedQualification);
-            }
-        }
 
         String courseId = generateCourseId();
 
@@ -96,16 +93,17 @@ public class CourseServiceImpl implements CourseService {
     }
 
 
+
+
     //update course details
     @Override
-    public ResponseEntity<?> updateCourseDetails(String id, CourseAddUpdateDTO courseAddUpdateDTO) {
+    public ResponseEntity<ApiResponse<?>> updateCourseDetails(String id, CourseAddUpdateDTO courseAddUpdateDTO){
 
         Course existing = repository.findById(id).orElse(null);
 
         if (existing == null) {
 
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ApiResponse.failure("Course detail","Courseid: " + id + " doesn't exist"));
+            throw new IDNotFound("Course Id","Courseid: " + id + " doesn't exist");
         }
 
         List<Enrollment> enrollment = enrollmentRepository.findByCourse_CourseId(id);
@@ -149,13 +147,15 @@ public class CourseServiceImpl implements CourseService {
     }
 
 
+
+
     @Override
-    public ResponseEntity<?> deleteCourseDetails(String id) {
+    public ResponseEntity<ApiResponse<?>> deleteCourseDetails(String id) {
         Course course = repository.findById(id).orElse(null);
         if (course == null) {
             //if it is not present
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ApiResponse.failure("Course id","Course id: " + id + " is not present"));
+
+            throw new IDNotFound("Course id","Course id: "+id+" is not present");
         }
         List<Enrollment> courseEnrolled = enrollmentRepository.findByCourse_CourseId(id);
         if (courseEnrolled.isEmpty()) {
@@ -172,8 +172,8 @@ public class CourseServiceImpl implements CourseService {
                             || e.getStatus().equals("In Progress"));
 
             if (hasActiveEnrollment) {
-                return ResponseEntity.status(HttpStatus.CONFLICT)
-                        .body(ApiResponse.failure("Course Allocation","Failed to delete course detail\nCourse has active enrollments."));
+
+                throw new CourseSlotsHandler("Course Allocation","Failed to delete course details\nCourse has active enrollments.");
             }
         }
         //else delete the course by id
@@ -189,18 +189,22 @@ public class CourseServiceImpl implements CourseService {
     }
 
 
+
+
     @Override
     public ResponseEntity<ApiResponse<CourseDto>> getCourseDetail(String id) {
 
         Course course = repository.findById(id).orElse(null);
         if (course == null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ApiResponse.failure("Course id","Course id: " + id + " not present."));
+
+            throw new IDNotFound("Course Id","Course id: " + id + " is not present.");
         }
 
         return ResponseEntity.status(HttpStatus.OK)
                 .body( ApiResponse.success(List.of(courseMapper.courseToCourseDto(course))));
     }
+
+
 
 
     @Override
@@ -213,8 +217,8 @@ public class CourseServiceImpl implements CourseService {
 
         if (courses.isEmpty()) {
 
-            return ResponseEntity.status(HttpStatus.OK)
-                    .body(ApiResponse.failure("Course Table","No Data Found"));
+
+            throw new IDNotFound("Course Table","No Data Found in Course table");
         }
         return ResponseEntity.status(HttpStatus.OK)
                 .body( ApiResponse.success(courses));

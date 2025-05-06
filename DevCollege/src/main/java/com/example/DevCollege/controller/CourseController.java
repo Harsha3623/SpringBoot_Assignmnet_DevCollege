@@ -1,7 +1,7 @@
 package com.example.DevCollege.controller;
 
 import com.example.DevCollege.dto.CourseAddUpdateDTO;
-import com.example.DevCollege.dto.CourseDto;
+import com.example.DevCollege.exception.custom.IDNotFound;
 import com.example.DevCollege.services.CourseService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;

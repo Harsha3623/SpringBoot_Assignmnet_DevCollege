@@ -5,6 +5,7 @@ import com.example.DevCollege.dto.StudentDto;
 import com.example.DevCollege.dto.StudentWalletAmountDto;
 import com.example.DevCollege.entity.Enrollment;
 import com.example.DevCollege.entity.Student;
+import com.example.DevCollege.exception.custom.IDNotFound;
 import com.example.DevCollege.mapper.StudentAddUpdateMapper;
 import com.example.DevCollege.mapper.StudentMapper;
 import com.example.DevCollege.mapper.StudentWalletAmountMapper;
@@ -24,12 +25,6 @@ import java.util.stream.Collectors;
 @Service
 public class StudentServiceImpl implements StudentService {
 
-
-    //qualifications
-    private List<String> allowedQualification = List.of(
-            "B.E", "B.TECH", "DIPLOMA", "M.E", "M.TECH", "M.PHIL", "MS",
-            "BBA", "BCOM", "BSC", "MSC", "BCA", "MCA", "LLB", "MBBS", "MBA"
-    );
 
     @Autowired
     StudentRepository studentRepository;
@@ -81,14 +76,6 @@ public class StudentServiceImpl implements StudentService {
 
         String[] qualifications = studentAddUpdateDTO.getHighestQualification().split(",");
 
-        for (String s : qualifications) {
-            if (!allowedQualification.contains(s.toUpperCase())) {
-                return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE)
-                        .body("Student Qualification is incorrect." +
-                                "\n" +
-                                "Allowed Qualifications:" + allowedQualification);
-            }
-        }
 
         student.setStudentId(studentID);
 
@@ -114,8 +101,8 @@ public class StudentServiceImpl implements StudentService {
         Student student = studentRepository.findById(stdId).orElse(null);
 
         if (student == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ApiResponse.failure("Student ID","Student id: " + stdId + " is not present."));
+
+            throw new IDNotFound("Student Id","Student Id: "+stdId+" is not present");
         }
 
         //updating the student details
@@ -145,8 +132,8 @@ public class StudentServiceImpl implements StudentService {
         //if it is not present
         if (student == null) {
 
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ApiResponse.failure("Student ID","Student id: " + stdId + " doesn't exist."));
+
+            throw new IDNotFound("Student Id","Student Id: "+stdId+" not present.");
 
         }
 
@@ -204,15 +191,14 @@ public class StudentServiceImpl implements StudentService {
 
 
     @Override
-    public ResponseEntity<?> getStudentDetail(String stdId) {
+    public ResponseEntity<ApiResponse<StudentDto>> getStudentDetail(String stdId) {
 
 
         Student student = studentRepository.findById(stdId).orElse(null);
 
         if (student == null) {
 
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ApiResponse.failure("Student ID","Student id: " + stdId + " is not present"));
+            throw new IDNotFound("Student Id","Student Id: "+stdId+" not present.");
         }
 
         return ResponseEntity.status(HttpStatus.OK)
@@ -227,14 +213,13 @@ public class StudentServiceImpl implements StudentService {
 
 
     @Override
-    public ResponseEntity<?> getAllStudentDetail() {
+    public ResponseEntity<ApiResponse<StudentDto>> getAllStudentDetail() {
 
         List<Student> students = studentRepository.findAll();
 
         if (students.isEmpty()) {
 
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ApiResponse.failure("Student Data","No data found."));
+            throw new IDNotFound("Student Data","No Data Found in Student table");
         }
 
         return ResponseEntity.status(HttpStatus.OK)
@@ -256,8 +241,7 @@ public class StudentServiceImpl implements StudentService {
 
         if (student == null) {
 
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ApiResponse.failure("Student ID","Student id: " + stdId + " doesn't found"));
+            throw new IDNotFound("Student Id","Student Id: "+stdId+" not present.");
 
         }
 
@@ -280,14 +264,13 @@ public class StudentServiceImpl implements StudentService {
 
 
     @Override
-    public ResponseEntity<?> getWalletDetail(String stdId) {
+    public ResponseEntity<ApiResponse<StudentWalletAmountDto>> getWalletDetail(String stdId) {
 
         Student student = studentRepository.findById(stdId).orElse(null);
 
         if (student == null) {
 
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ApiResponse.failure("Student Id","Student id: " + stdId + " is not found."));
+            throw new IDNotFound("Student Id","Student Id: "+stdId+" not present.");
 
         }
 
