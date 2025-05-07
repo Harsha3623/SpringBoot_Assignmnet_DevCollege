@@ -124,8 +124,7 @@ public class CourseServiceImpl implements CourseService {
 
             } else {
 
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body(ApiResponse.failure("Number of slots","while updating the no of slots should not be less"));
+                throw new CourseSlotsHandler("Number of slots","while updating the no of slots should not be less");
             }
 
         } else {
