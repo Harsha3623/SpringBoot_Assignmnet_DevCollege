@@ -11,14 +11,17 @@ public class CourseDto {
     String courseId;
 
 
+
     @NotBlank(message = "Course Name is mandatory")
     @Size(min = 3,max = 50,message = "Course Name must be between 3 and 50 character")
     private String name;
 
 
+
     @NotBlank(message = "Course description is required")
     @Size(min = 20, max = 200, message = "Course description length should be more than 50 and less than 200")
     private String description;
+
 
 
     @NotNull(message = "Number of slots is required")
@@ -27,14 +30,17 @@ public class CourseDto {
 
 
 
+
     @NotNull(message = "Course fee is required")
     @Min(value = 1000,message = "Course fee should not less than 1000")
     private Float fee;
 
 
+
     @NotNull(message = "Course duration is required")
     @Min(value = 60, message = "Course duration should not be less than 60 minutes")
     private Integer duration;
+
 
 
     @NotBlank(message = "Course tag is required")

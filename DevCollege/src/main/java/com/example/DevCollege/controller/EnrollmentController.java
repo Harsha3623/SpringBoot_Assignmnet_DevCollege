@@ -3,8 +3,6 @@ package com.example.DevCollege.controller;
 import com.example.DevCollege.dto.EnrollmentAddDto;
 import com.example.DevCollege.dto.EnrollmentStatus;
 import com.example.DevCollege.services.EnrollmentService;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;

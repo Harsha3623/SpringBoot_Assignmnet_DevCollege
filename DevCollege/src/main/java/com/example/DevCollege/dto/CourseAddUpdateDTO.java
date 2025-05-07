@@ -9,14 +9,17 @@ import jakarta.validation.constraints.Size;
 public class CourseAddUpdateDTO {
 
 
+
     @NotBlank(message = "Course Name is mandatory")
     @Size(min = 3,max = 50,message = "Course Name must be between 3 and 50 character")
     private String name;
 
 
+
     @NotBlank(message = "Course description is required")
     @Size(min = 20, max = 200, message = "Course description length should be more than 50 and less than 200")
     private String description;
+
 
 
     @NotNull(message = "Number of slots is required")
@@ -25,9 +28,11 @@ public class CourseAddUpdateDTO {
 
 
 
+
     @NotNull(message = "Course fee is required")
     @Min(value = 1000,message = "Course fee should not less than 1000")
     private Float fee;
+
 
 
     @NotNull(message = "Course duration is required")
@@ -35,10 +40,14 @@ public class CourseAddUpdateDTO {
     private Integer duration;
 
 
+
+
     @NotBlank(message = "Course tag is required")
     //validation of qualification
     @ValidTags(message = "Invalid qualification tags")
     private String tag;
+
+
 
 
     public CourseAddUpdateDTO() {

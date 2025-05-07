@@ -1,7 +1,6 @@
 package com.example.DevCollege.controller;
 
 import com.example.DevCollege.dto.StudentAddUpdateDTO;
-import com.example.DevCollege.dto.StudentDto;
 import com.example.DevCollege.dto.StudentWalletAmountDto;
 import com.example.DevCollege.services.StudentService;
 import jakarta.validation.Valid;

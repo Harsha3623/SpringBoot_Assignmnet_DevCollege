@@ -1,6 +1,5 @@
 package com.example.DevCollege.exception.custom;
 
-import com.example.DevCollege.entity.Course;
 
 public class CourseSlotsHandler extends RuntimeException{
 
